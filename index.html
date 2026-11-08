@@ -1,0 +1,531 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0058A3">
+<title>Asistencia Guardias PPS</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{--azul:#0058A3;--azul2:#00447e;--amarillo:#FFDB00;--bg:#f2f4f7;--card:#fff;--txt:#1d2733;--mut:#6b7785;--borde:#dde3ea;
+--ok:#1e8e3e;--warn:#e8a200;--bad:#d93025;--r:12px}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--txt);font-size:15px}
+header{background:var(--azul);color:#fff;padding:12px 16px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:10}
+header .logo{background:var(--amarillo);color:var(--azul);font-weight:800;border-radius:8px;padding:4px 8px;font-size:13px}
+header h1{font-size:16px;margin:0;flex:1}
+#sync{font-size:12px;background:rgba(255,255,255,.15);padding:4px 8px;border-radius:20px;cursor:pointer;white-space:nowrap}
+#sync.pend{background:var(--amarillo);color:var(--azul);font-weight:700}
+nav{display:flex;background:var(--azul2);overflow-x:auto;position:sticky;top:48px;z-index:9}
+nav button{flex:1;background:none;border:0;color:#cfe0f2;padding:11px 12px;font-size:14px;font-weight:600;border-bottom:3px solid transparent;white-space:nowrap}
+nav button.on{color:#fff;border-bottom-color:var(--amarillo)}
+main{max-width:980px;margin:0 auto;padding:14px 16px 80px}
+section{display:none}section.on{display:block}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:12px}
+.row>label{flex:1;min-width:140px}
+label{display:block;font-size:12px;font-weight:600;color:var(--mut);margin-bottom:8px}
+input,select,textarea{width:100%;margin-top:4px;padding:10px;border:1px solid var(--borde);border-radius:8px;font-size:15px;background:#fff;color:var(--txt);font-family:inherit}
+textarea{min-height:56px;resize:vertical}
+input:disabled{background:#eef1f4;color:var(--mut)}
+.seg{display:flex;border:1px solid var(--borde);border-radius:8px;overflow:hidden;margin-top:4px}
+.seg button{flex:1;border:0;background:#fff;padding:10px;font-size:14px;font-weight:600;color:var(--mut)}
+.seg button.on{background:var(--azul);color:#fff}
+.btn{border:0;border-radius:8px;padding:11px 16px;font-size:15px;font-weight:700;background:var(--azul);color:#fff;cursor:pointer}
+.btn.sec{background:#fff;color:var(--azul);border:1px solid var(--azul)}
+.btn.am{background:var(--amarillo);color:var(--azul)}
+.btn:disabled{opacity:.5}
+.btn.full{width:100%}
+.chips{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:12px}
+.chip{background:#fff;border:1px solid var(--borde);border-radius:8px;padding:6px;text-align:center;font-size:11px;color:var(--mut)}
+.chip b{display:block;font-size:12px;color:var(--txt)}
+.chip.ok{border-color:var(--ok);background:#e9f6ec}.chip.ok b{color:var(--ok)}
+.chip.nov{border-color:var(--warn);background:#fff7df}
+.cards{display:grid;grid-template-columns:1fr;gap:14px}
+@media(min-width:760px){.cards{grid-template-columns:1fr 1fr}}
+.card{background:var(--card);border-radius:var(--r);padding:14px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.card h3{margin:0 0 10px;font-size:16px;display:flex;align-items:center;gap:8px}
+.card h3 .tag{font-size:11px;padding:3px 8px;border-radius:20px;background:#eef1f4;color:var(--mut);font-weight:600}
+.card h3 .tag.ok{background:#e9f6ec;color:var(--ok)}
+.card h3 .tag.q{background:#fff7df;color:#8a6100}
+.chk{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--txt);font-weight:500}
+.chk input{width:auto;margin:0}
+.quick{display:flex;gap:6px;flex-wrap:wrap;margin:-2px 0 10px}
+.quick button{border:1px solid var(--borde);background:#fff;border-radius:20px;padding:6px 10px;font-size:13px;font-weight:600;color:var(--azul)}
+.racha{font-size:13px;padding:8px 10px;border-radius:8px;margin:-2px 0 10px;display:none}
+.racha.n{display:block;background:#eef1f4;color:var(--mut)}
+.racha.w{display:block;background:#fff7df;color:#8a6100;font-weight:700}
+.racha.b{display:block;background:#fde8e6;color:var(--bad);font-weight:700}
+.calc{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;background:#f6f8fa;border-radius:8px;padding:8px;margin:4px 0 12px;text-align:center}
+.calc div{font-size:11px;color:var(--mut)}.calc b{display:block;font-size:14px;color:var(--txt)}
+.kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px}
+@media(min-width:760px){.kpis{grid-template-columns:repeat(5,1fr)}}
+.kpi{background:#fff;border-radius:var(--r);padding:12px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.kpi div{font-size:12px;color:var(--mut)}.kpi b{font-size:19px}
+.box{background:#fff;border-radius:var(--r);padding:12px;box-shadow:0 1px 3px rgba(0,0,0,.08);margin-bottom:14px;overflow-x:auto}
+.box h4{margin:0 0 8px;font-size:14px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:7px 6px;border-bottom:1px solid var(--borde);text-align:left;white-space:nowrap}
+th{font-size:11px;color:var(--mut);text-transform:uppercase}
+td.n,th.n{text-align:right}
+.alert{background:#fde8e6;color:var(--bad);border-radius:8px;padding:10px;font-size:13px;margin-bottom:12px}
+.info{background:#e8f0fa;color:var(--azul2);border-radius:8px;padding:10px;font-size:13px;margin-bottom:12px}
+.lst .it{display:flex;align-items:center;justify-content:space-between;background:#fff;border-radius:10px;padding:12px;margin-bottom:8px;box-shadow:0 1px 2px rgba(0,0,0,.06)}
+.lst .it small{color:var(--mut);display:block}
+.pill{font-weight:800;border-radius:20px;padding:4px 10px;font-size:13px;background:#eef1f4}
+.pill.w{background:#fff7df;color:#8a6100}.pill.b{background:#fde8e6;color:var(--bad)}
+#toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:#1d2733;color:#fff;padding:12px 16px;border-radius:10px;font-size:14px;max-width:92vw;opacity:0;pointer-events:none;transition:.25s;z-index:50}
+#toast.on{opacity:1}#toast.err{background:var(--bad)}
+.hide{display:none!important}
+@media print{header,nav,.noprint{display:none!important}body{background:#fff}main{padding:0}section{display:none!important}#v-mes{display:block!important}.box,.kpi{box-shadow:none;border:1px solid #ccc}}
+</style>
+</head>
+<body>
+<header>
+  <span class="logo">PPS</span>
+  <h1>Asistencia Guardias y CCTV</h1>
+  <span id="sync" title="Sincronizar">●</span>
+</header>
+<nav>
+  <button data-v="reg" class="on">Registrar</button>
+  <button data-v="mes">Mes</button>
+  <button data-v="desc">Descansos</button>
+  <button data-v="adm">Admin</button>
+</nav>
+
+<main>
+<!-- REGISTRAR -->
+<section id="v-reg" class="on">
+  <div class="row">
+    <label>Fecha<input type="date" id="r-fecha"></label>
+    <label>Turno<div class="seg" id="r-turno"><button data-t="Diurno" class="on">Diurno</button><button data-t="Nocturno">Nocturno</button></div></label>
+    <label>Registrado por<input id="r-quien" placeholder="Tu nombre" autocomplete="name"></label>
+  </div>
+  <div class="chips" id="r-chips"></div>
+  <div id="r-cerrado" class="alert hide"></div>
+  <div class="cards" id="r-cards"></div>
+</section>
+
+<!-- MES -->
+<section id="v-mes">
+  <div class="row noprint">
+    <label>Mes<input type="month" id="m-mes"></label>
+    <button class="btn" id="m-cargar">Cargar</button>
+    <button class="btn sec" id="m-xlsx">Excel</button>
+    <button class="btn sec" id="m-print">PDF</button>
+  </div>
+  <div id="m-out"></div>
+</section>
+
+<!-- DESCANSOS -->
+<section id="v-desc">
+  <div class="row">
+    <label>Al día<input type="date" id="d-fecha"></label>
+    <button class="btn" id="d-cargar">Ver</button>
+  </div>
+  <div class="info" id="d-info"></div>
+  <div class="lst" id="d-out"></div>
+</section>
+
+<!-- ADMIN -->
+<section id="v-adm">
+  <div id="a-login" class="box">
+    <h4>Acceso administrador</h4>
+    <div class="row"><label>PIN<input type="password" id="a-pin" inputmode="numeric"></label><button class="btn" id="a-entrar">Entrar</button></div>
+  </div>
+  <div id="a-panel" class="hide">
+    <div class="box">
+      <h4>Cierre de mes</h4>
+      <div class="row"><label>Mes<input type="month" id="a-mes"></label>
+        <button class="btn" id="a-cerrar">Cerrar</button><button class="btn sec" id="a-abrir">Abrir</button></div>
+      <div id="a-cerrados" style="font-size:13px;color:var(--mut)"></div>
+    </div>
+    <div class="box">
+      <h4>Parámetros</h4>
+      <div id="a-cfg"></div>
+    </div>
+    <div class="box">
+      <h4>Agregar persona</h4>
+      <div class="row"><label>Nombre<input id="a-pnom"></label>
+        <label>Cargo<select id="a-pcar"><option>GUARDIA</option><option>CCTV</option></select></label>
+        <button class="btn" id="a-padd">Agregar</button></div>
+    </div>
+  </div>
+</section>
+</main>
+
+<datalist id="dl-GUARDIA"></datalist>
+<datalist id="dl-CCTV"></datalist>
+<datalist id="dl-TODOS"></datalist>
+<div id="toast"></div>
+
+<script>
+/* ====== CONFIGURACIÓN: pega aquí la URL de la implementación web de Apps Script ====== */
+const API_URL = 'PEGAR_AQUI_URL_DE_LA_APLICACION_WEB';
+
+const MOTIVOS = ['Atraso', 'Retiro anticipado', 'Ausencia', 'Sin relevo', 'Sin EPP / uniforme', 'Durmiendo en turno', 'Otro'];
+const CARGOS = [{ k: 'GUARDIA', t: 'Guardia' }, { k: 'CCTV', t: 'CCTV' }];
+const LS = { init: 'asis_init', queue: 'asis_queue', quien: 'asis_quien' };
+
+let DATA = null;          // init: config, personal, ids, mesesCerrados
+let DIA = [];             // registros del día cargado
+let TURNO = 'Diurno';
+let MES_ROWS = [];
+let ADMIN_PIN = null;
+
+/* ---------- utilidades ---------- */
+const $ = s => document.querySelector(s);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const num = (x, d = 0) => { const s = String(x == null ? '' : x).trim().replace(',', '.'); const n = Number(s); return s === '' || isNaN(n) ? d : n; };
+const clp = n => '$' + Number(n || 0).toLocaleString('es-CL', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+const pct = n => (Number(n || 0) * 100).toLocaleString('es-CL', { maximumFractionDigits: 2 }) + '%';
+const hoyISO = (d = new Date()) => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+const addDays = (f, n) => { const p = f.split('-').map(Number); return new Date(Date.UTC(p[0], p[1] - 1, p[2]) + n * 864e5).toISOString().slice(0, 10); };
+const fmtF = f => f ? f.split('-').reverse().join('/') : '';
+const norm = s => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
+const lsGet = (k, d) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { } };
+
+function toast(msg, err) {
+  const t = $('#toast'); t.textContent = msg; t.className = 'on' + (err ? ' err' : '');
+  clearTimeout(toast._t); toast._t = setTimeout(() => t.className = '', 3500);
+}
+
+/* ---------- JSONP ---------- */
+let jpN = 0;
+function api(action, params = {}, timeout = 25000) {
+  return new Promise((res, rej) => {
+    if (!/^https:\/\//.test(API_URL)) { const e = new Error('Configura API_URL en el código'); e.server = true; return rej(e); }
+    const cb = '__jp' + (++jpN) + '_' + Date.now();
+    const s = document.createElement('script');
+    const done = () => { clearTimeout(t); window[cb] = () => { }; s.remove(); };
+    const t = setTimeout(() => { done(); rej(new Error('Sin respuesta del servidor')); }, timeout);
+    window[cb] = r => {
+      done();
+      if (r && r.ok) res(r.data);
+      else { const e = new Error((r && r.error) || 'Error del servidor'); e.server = true; rej(e); }
+    };
+    s.onerror = () => { done(); rej(new Error('No se pudo conectar')); };
+    s.src = API_URL + '?' + new URLSearchParams(Object.assign({ action, callback: cb }, params)).toString();
+    document.head.appendChild(s);
+  });
+}
+
+/* ---------- cola offline ---------- */
+function queue() { return lsGet(LS.queue, []); }
+function setQueue(q) { lsSet(LS.queue, q); renderSync(); }
+function clave(p) { return p.fecha + '|' + p.turno + '|' + p.cargo; }
+function encolar(p) { const q = queue().filter(x => clave(x) !== clave(p)); q.push(p); setQueue(q); }
+function renderSync() {
+  const n = queue().length, s = $('#sync');
+  s.textContent = n ? n + ' pendiente' + (n > 1 ? 's' : '') : '● En línea';
+  s.className = n ? 'pend' : '';
+}
+let syncing = false;
+async function sincronizar(manual) {
+  if (syncing) return; syncing = true;
+  try {
+    let q = queue();
+    for (const p of q.slice()) {
+      try {
+        await api('guardar', { data: JSON.stringify(p) });
+        q = queue().filter(x => clave(x) !== clave(p)); setQueue(q);
+      } catch (e) {
+        if (e.server) { q = queue().filter(x => clave(x) !== clave(p)); setQueue(q); toast('No se guardó ' + fmtF(p.fecha) + ' ' + p.turno + ' ' + p.cargo + ': ' + e.message, true); }
+        else break;
+      }
+    }
+    if (manual) toast(queue().length ? 'Aún sin conexión' : 'Todo sincronizado');
+    if (!queue().length && $('#v-reg').classList.contains('on')) cargarDia();
+  } finally { syncing = false; }
+}
+
+/* ---------- init ---------- */
+async function init() {
+  $('#r-quien').value = lsGet(LS.quien, '');
+  const now = new Date(), h = now.getHours();
+  // 08–20 → Diurno de hoy; 20–24 → Nocturno de hoy; 00–08 → Nocturno de ayer
+  $('#r-fecha').value = h < 8 ? addDays(hoyISO(now), -1) : hoyISO(now);
+  setTurno(h >= 8 && h < 20 ? 'Diurno' : 'Nocturno', true);
+  $('#m-mes').value = hoyISO().slice(0, 7);
+  $('#a-mes').value = hoyISO().slice(0, 7);
+  $('#d-fecha').value = hoyISO();
+  renderSync();
+  DATA = lsGet(LS.init, null);
+  if (DATA) aplicarInit();
+  try { DATA = await api('init'); lsSet(LS.init, DATA); aplicarInit(); }
+  catch (e) { if (!DATA) { toast(e.message, true); return; } }
+  cargarDia();
+  sincronizar();
+}
+function aplicarInit() {
+  const by = { GUARDIA: [], CCTV: [] };
+  DATA.personal.forEach(p => by[p.cargo].push(p.nombre));
+  ['GUARDIA', 'CCTV'].forEach(c => $('#dl-' + c).innerHTML = by[c].sort().map(n => `<option value="${esc(n)}">`).join(''));
+  $('#dl-TODOS').innerHTML = DATA.personal.map(p => p.nombre).sort().map(n => `<option value="${esc(n)}">`).join('');
+  renderCards();
+}
+const C = k => DATA ? DATA.config[k] : undefined;
+function calc(min, cargo) {
+  const horas = num(C('HORAS_TURNO'), 11);
+  const m = Math.max(0, Math.min(Math.round(num(min)), Math.round(horas * 60)));
+  const hh = m / 60, tarifa = cargo === 'CCTV' ? num(C('TARIFA_CCTV'), 7299) : num(C('TARIFA_GUARDIA'), 7101);
+  const desc = Math.round(m * tarifa / 60 * 100) / 100;
+  return { horas, min: m, hh, pctC: horas ? 1 - hh / horas : 0, desc, multa: Math.round(desc * num(C('PCT_MULTA'), 0.5) * 100) / 100 };
+}
+
+/* ---------- navegación ---------- */
+document.querySelectorAll('nav button').forEach(b => b.onclick = () => {
+  document.querySelectorAll('nav button').forEach(x => x.classList.toggle('on', x === b));
+  document.querySelectorAll('main section').forEach(s => s.classList.toggle('on', s.id === 'v-' + b.dataset.v));
+  if (b.dataset.v === 'desc') cargarDescansos();
+});
+$('#sync').onclick = () => sincronizar(true);
+window.addEventListener('online', () => sincronizar());
+setInterval(() => { if (queue().length) sincronizar(); }, 60000);
+
+/* ---------- REGISTRAR ---------- */
+function setTurno(t, silent) {
+  TURNO = t;
+  document.querySelectorAll('#r-turno button').forEach(b => b.classList.toggle('on', b.dataset.t === t));
+  if (!silent) renderCards();
+}
+document.querySelectorAll('#r-turno button').forEach(b => b.onclick = () => setTurno(b.dataset.t));
+$('#r-fecha').onchange = cargarDia;
+$('#r-quien').onchange = e => lsSet(LS.quien, e.target.value.trim());
+
+async function cargarDia() {
+  const f = $('#r-fecha').value; if (!f) return;
+  try { DIA = (await api('dia', { fecha: f })).registros; }
+  catch (e) { DIA = []; if (e.server) toast(e.message, true); }
+  renderCards();
+}
+
+function registroDe(fecha, turno, cargo) {
+  const q = queue().find(p => p.fecha === fecha && p.turno === turno && p.cargo === cargo);
+  if (q) return { pend: true, ID_GUARDIA: q.id, NOMBRE: q.nombre, MINUTOS_INASISTENCIA: q.minutos, MOTIVO: q.motivo, RESPONSABLE: q.responsable, OBSERVACION: q.observacion, sinCubrir: q.sinCubrir };
+  return DIA.find(r => r.FECHA === fecha && r.TURNO === turno && r.CARGO === cargo) || null;
+}
+
+function renderChips() {
+  const f = $('#r-fecha').value;
+  $('#r-chips').innerHTML = ['Diurno', 'Nocturno'].flatMap(t => CARGOS.map(c => {
+    const r = registroDe(f, t, c.k);
+    const cls = !r ? '' : (num(r.MINUTOS_INASISTENCIA) > 0 ? 'nov' : 'ok');
+    const est = !r ? 'Pendiente' : r.pend ? 'Sin enviar' : (num(r.MINUTOS_INASISTENCIA) > 0 ? r.MINUTOS_INASISTENCIA + ' min' : 'OK');
+    return `<div class="chip ${cls}">${t === 'Diurno' ? 'Día' : 'Noche'} · ${c.t}<b>${esc(est)}</b></div>`;
+  })).join('');
+}
+
+function renderCards() {
+  if (!DATA) return;
+  const f = $('#r-fecha').value;
+  const cerrado = DATA.mesesCerrados.includes(f.slice(0, 7));
+  $('#r-cerrado').textContent = cerrado ? 'El mes ' + f.slice(0, 7) + ' está cerrado. Solo lectura.' : '';
+  $('#r-cerrado').classList.toggle('hide', !cerrado);
+  renderChips();
+  $('#r-cards').innerHTML = CARGOS.map(c => {
+    const r = registroDe(f, TURNO, c.k) || {};
+    const sin = r.sinCubrir || /^sin\b/i.test(String(r.NOMBRE || '').trim());
+    const ids = DATA.ids[c.k];
+    const tag = r.pend ? '<span class="tag q">Sin enviar</span>' : (r.CLAVE ? '<span class="tag ok">Registrado</span>' : '<span class="tag">Pendiente</span>');
+    return `<div class="card" data-cargo="${c.k}">
+      <h3>${c.t} · ${TURNO} ${tag}</h3>
+      <div class="row" style="margin-bottom:0">
+        <label>ID puesto<select class="f-id"><option value="">Seleccionar…</option>${ids.map(i => `<option ${i === r.ID_GUARDIA ? 'selected' : ''}>${esc(i)}</option>`).join('')}</select></label>
+        <label>Nombre<input class="f-nom" list="dl-${c.k}" value="${esc(sin ? '' : r.NOMBRE)}" ${sin ? 'disabled' : ''} placeholder="Nombre y apellido" autocomplete="off"></label>
+      </div>
+      <label class="chk"><input type="checkbox" class="f-sin" ${sin ? 'checked' : ''}> Puesto sin cubrir</label>
+      <div class="racha"></div>
+      <label>Minutos de inasistencia<input type="number" class="f-min" min="0" step="1" inputmode="numeric" value="${num(r.MINUTOS_INASISTENCIA)}"></label>
+      <div class="quick"><button data-q="0">0</button><button data-q="+5">+5</button><button data-q="+15">+15</button><button data-q="+30">+30</button><button data-q="+60">+60</button><button data-q="full">Turno completo</button></div>
+      <label>Motivo<select class="f-mot"><option value="">—</option>${MOTIVOS.concat(r.MOTIVO && !MOTIVOS.includes(r.MOTIVO) ? [r.MOTIVO] : []).map(m => `<option ${m === r.MOTIVO ? 'selected' : ''}>${esc(m)}</option>`).join('')}</select></label>
+      <label>Responsable (si fue otra persona, ej. el relevo)<input class="f-resp" list="dl-TODOS" value="${esc(r.RESPONSABLE)}" autocomplete="off"></label>
+      <label>Observación<textarea class="f-obs">${esc(r.OBSERVACION)}</textarea></label>
+      <div class="calc"></div>
+      <button class="btn full f-save" ${cerrado ? 'disabled' : ''}>Guardar ${c.t.toLowerCase()}</button>
+    </div>`;
+  }).join('');
+  document.querySelectorAll('#r-cards .card').forEach(bindCard);
+}
+
+function bindCard(card) {
+  const cargo = card.dataset.cargo, q = s => card.querySelector(s);
+  const upd = () => {
+    const k = calc(q('.f-min').value, cargo);
+    q('.calc').innerHTML = `<div>HH<b>${k.hh.toFixed(2)}</b></div><div>Cumpl.<b>${pct(k.pctC)}</b></div><div>Descuento<b>${clp(k.desc)}</b></div><div>Multa<b>${clp(k.multa)}</b></div>`;
+  };
+  q('.f-min').oninput = upd;
+  card.querySelectorAll('.quick button').forEach(b => b.onclick = () => {
+    const v = b.dataset.q, full = Math.round(num(C('HORAS_TURNO'), 11) * 60), cur = num(q('.f-min').value);
+    q('.f-min').value = v === 'full' ? full : v === '0' ? 0 : Math.min(full, cur + num(v));
+    if (v === 'full' && !q('.f-mot').value) q('.f-mot').value = 'Ausencia';
+    upd();
+  });
+  q('.f-sin').onchange = e => {
+    const on = e.target.checked;
+    q('.f-nom').disabled = on;
+    q('.f-nom').value = on ? '' : q('.f-nom').value;
+    if (on && String(C('SIN_CUBRIR_COBRA')).toUpperCase() === 'SI' && !num(q('.f-min').value)) {
+      q('.f-min').value = Math.round(num(C('HORAS_TURNO'), 11) * 60); q('.f-mot').value = 'Sin relevo';
+    }
+    revisarRacha(card); upd();
+  };
+  let tm; q('.f-nom').oninput = () => { clearTimeout(tm); tm = setTimeout(() => revisarRacha(card), 600); };
+  q('.f-save').onclick = () => guardarCard(card);
+  upd();
+  if (q('.f-nom').value) revisarRacha(card);
+}
+
+async function revisarRacha(card) {
+  const box = card.querySelector('.racha'), nom = card.querySelector('.f-nom').value.trim();
+  if (!nom || card.querySelector('.f-sin').checked) { box.className = 'racha'; return; }
+  try {
+    const { dias } = await api('racha', { nombre: nom, fecha: $('#r-fecha').value });
+    pintarRacha(box, dias);
+  } catch (e) { box.className = 'racha'; }
+}
+function pintarRacha(box, dias) {
+  const alerta = num(C('ALERTA_DIAS'), 6);
+  if (dias >= alerta + 1) { box.className = 'racha b'; box.textContent = `⛔ Día ${dias} consecutivo: supera el máximo legal. Debe tener descanso.`; }
+  else if (dias >= alerta) { box.className = 'racha w'; box.textContent = `⚠️ Día ${dias} consecutivo: mañana debe descansar.`; }
+  else { box.className = 'racha n'; box.textContent = `Día ${dias} consecutivo`; }
+}
+
+async function guardarCard(card) {
+  const q = s => card.querySelector(s), cargo = card.dataset.cargo;
+  const quien = $('#r-quien').value.trim();
+  const p = {
+    fecha: $('#r-fecha').value, turno: TURNO, cargo,
+    id: q('.f-id').value, nombre: q('.f-nom').value.trim(), sinCubrir: q('.f-sin').checked,
+    minutos: num(q('.f-min').value), motivo: q('.f-mot').value,
+    responsable: q('.f-resp').value.trim(), observacion: q('.f-obs').value.trim(), registradoPor: quien
+  };
+  if (!quien) return toast('Indica quién registra (arriba)', true);
+  if (!p.id) return toast('Selecciona el ID del puesto', true);
+  if (!p.nombre && !p.sinCubrir) return toast('Escribe el nombre o marca "Puesto sin cubrir"', true);
+  if (p.nombre.includes('/')) return toast('Un solo nombre. El reemplazo va en Responsable u Observación', true);
+  if (p.minutos > 0 && !p.motivo) return toast('Indica el motivo de la inasistencia', true);
+  const btn = q('.f-save'); btn.disabled = true; btn.textContent = 'Guardando…';
+  try {
+    const r = await api('guardar', { data: JSON.stringify(p) });
+    toast('Guardado ✔');
+    if (r.racha) pintarRacha(q('.racha'), r.racha);
+    await cargarDia();
+  } catch (e) {
+    if (e.server) toast(e.message, true);
+    else { encolar(p); toast('Sin conexión: quedó guardado en el equipo y se enviará solo'); renderCards(); }
+  } finally { btn.disabled = false; btn.textContent = 'Guardar ' + (cargo === 'CCTV' ? 'cctv' : 'guardia'); }
+}
+
+/* ---------- MES ---------- */
+$('#m-cargar').onclick = cargarMes;
+$('#m-print').onclick = () => window.print();
+$('#m-xlsx').onclick = () => {
+  if (!MES_ROWS.length) return toast('Carga un mes primero', true);
+  if (!window.XLSX) return toast('No se pudo cargar el exportador', true);
+  const cols = ['FECHA', 'DIA', 'MES', 'SEMANA', 'ID_GUARDIA', 'NOMBRE', 'TURNO', 'HORAS_TURNO', 'HH_INASISTENCIA', 'MINUTOS_INASISTENCIA', 'HORA_CUBIERTA', 'PCT_INASISTENCIA', 'PCT_CUMPLIMIENTO', 'DESCUENTO', 'MULTA', 'CARGO', 'MOTIVO', 'RESPONSABLE', 'OBSERVACION', 'REGISTRADO_POR', 'ACTUALIZADO'];
+  const data = [cols].concat(MES_ROWS.map(r => cols.map(c => c === 'FECHA' ? fmtF(r.FECHA) : r[c])));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(data), 'Asistencia');
+  XLSX.writeFile(wb, 'Asistencia_' + $('#m-mes').value + '.xlsx');
+};
+
+async function cargarMes() {
+  const mes = $('#m-mes').value; if (!mes) return;
+  $('#m-out').innerHTML = '<div class="info">Cargando…</div>';
+  try {
+    const r = await api('mes', { mes });
+    MES_ROWS = r.registros.sort((a, b) => (a.FECHA + a.TURNO + a.CARGO) < (b.FECHA + b.TURNO + b.CARGO) ? -1 : 1);
+    renderMes(mes, r.cerrado);
+  } catch (e) { $('#m-out').innerHTML = `<div class="alert">${esc(e.message)}</div>`; }
+}
+
+function renderMes(mes, cerrado) {
+  const R = MES_ROWS;
+  const sum = (a, k) => a.reduce((s, r) => s + num(r[k]), 0);
+  const totMin = sum(R, 'MINUTOS_INASISTENCIA'), totH = sum(R, 'HORAS_TURNO'), totHH = sum(R, 'HH_INASISTENCIA');
+  // turnos faltantes hasta hoy
+  const [y, m] = mes.split('-').map(Number), diasMes = new Date(y, m, 0).getDate(), hoy = hoyISO();
+  const falt = [];
+  for (let d = 1; d <= diasMes; d++) {
+    const f = mes + '-' + String(d).padStart(2, '0'); if (f > hoy) break;
+    ['Diurno', 'Nocturno'].forEach(t => CARGOS.forEach(c => { if (!R.some(r => r.FECHA === f && r.TURNO === t && r.CARGO === c.k)) falt.push(fmtF(f) + ' ' + t + ' ' + c.t); }));
+  }
+  const group = key => {
+    const g = {};
+    R.forEach(r => { const k = String(r[key] || '').trim() || '(sin dato)'; (g[k] = g[k] || { n: 0, min: 0, desc: 0, multa: 0, nov: 0 }); g[k].n++; g[k].min += num(r.MINUTOS_INASISTENCIA); g[k].desc += num(r.DESCUENTO); g[k].multa += num(r.MULTA); if (num(r.MINUTOS_INASISTENCIA) > 0) g[k].nov++; });
+    return Object.entries(g).sort((a, b) => b[1].desc - a[1].desc || a[0].localeCompare(b[0]));
+  };
+  const tabla = (titulo, rows, lbl) => `<div class="box"><h4>${titulo}</h4><table><tr><th>${lbl}</th><th class="n">Turnos</th><th class="n">Con novedad</th><th class="n">Minutos</th><th class="n">Descuento</th><th class="n">Multa</th></tr>${rows.map(([k, v]) => `<tr><td>${esc(k)}</td><td class="n">${v.n}</td><td class="n">${v.nov}</td><td class="n">${v.min}</td><td class="n">${clp(v.desc)}</td><td class="n">${clp(v.multa)}</td></tr>`).join('')}</table></div>`;
+  const nov = R.filter(r => num(r.MINUTOS_INASISTENCIA) > 0);
+  $('#m-out').innerHTML = `
+    ${cerrado ? '<div class="info">Mes cerrado ✔</div>' : ''}
+    ${falt.length ? `<div class="alert"><b>${falt.length} turnos sin registrar:</b> ${esc(falt.slice(0, 12).join(' · '))}${falt.length > 12 ? '…' : ''}</div>` : ''}
+    <div class="kpis">
+      <div class="kpi"><div>Turnos registrados</div><b>${R.length}</b></div>
+      <div class="kpi"><div>Minutos inasistencia</div><b>${totMin}</b></div>
+      <div class="kpi"><div>Cumplimiento</div><b>${pct(totH ? 1 - totHH / totH : 1)}</b></div>
+      <div class="kpi"><div>Descuento</div><b>${clp(sum(R, 'DESCUENTO'))}</b></div>
+      <div class="kpi"><div>Multa</div><b>${clp(sum(R, 'MULTA'))}</b></div>
+    </div>
+    ${tabla('Por cargo', group('CARGO'), 'Cargo')}
+    ${tabla('Por persona', group('NOMBRE'), 'Nombre')}
+    ${tabla('Por ID de puesto', group('ID_GUARDIA'), 'ID')}
+    <div class="box"><h4>Detalle de novedades (${nov.length})</h4><table><tr><th>Fecha</th><th>Turno</th><th>ID</th><th>Nombre</th><th class="n">Min</th><th>Motivo</th><th>Responsable</th><th class="n">Descuento</th><th class="n">Multa</th><th>Observación</th></tr>
+    ${nov.map(r => `<tr><td>${fmtF(r.FECHA)}</td><td>${esc(r.TURNO)}</td><td>${esc(r.ID_GUARDIA)}</td><td>${esc(r.NOMBRE)}</td><td class="n">${num(r.MINUTOS_INASISTENCIA)}</td><td>${esc(r.MOTIVO)}</td><td>${esc(r.RESPONSABLE)}</td><td class="n">${clp(r.DESCUENTO)}</td><td class="n">${clp(r.MULTA)}</td><td style="white-space:normal;min-width:180px">${esc(r.OBSERVACION)}</td></tr>`).join('')}</table></div>`;
+}
+
+/* ---------- DESCANSOS ---------- */
+$('#d-cargar').onclick = cargarDescansos;
+async function cargarDescansos() {
+  const f = $('#d-fecha').value; if (!f) return;
+  const alerta = num(C('ALERTA_DIAS'), 6);
+  $('#d-info').textContent = `Días seguidos trabajados al ${fmtF(f)}. Amarillo: día ${alerta}. Rojo: día ${alerta + 1} o más.`;
+  $('#d-out').innerHTML = '<div class="info">Cargando…</div>';
+  try {
+    const { personas } = await api('descansos', { fecha: f });
+    const act = personas.filter(p => p.dias > 0);
+    $('#d-out').innerHTML = act.length ? act.map(p => {
+      const cls = p.dias >= alerta + 1 ? 'b' : p.dias >= alerta ? 'w' : '';
+      return `<div class="it"><div><b>${esc(p.nombre)}</b><small>${p.hoy ? 'Trabaja este día' : 'Último turno: ' + fmtF(p.ultimo)}</small></div><span class="pill ${cls}">${p.dias} día${p.dias > 1 ? 's' : ''}</span></div>`;
+    }).join('') : '<div class="info">Nadie con turnos recientes.</div>';
+  } catch (e) { $('#d-out').innerHTML = `<div class="alert">${esc(e.message)}</div>`; }
+}
+
+/* ---------- ADMIN ---------- */
+const CFG_EDIT = [
+  ['TARIFA_GUARDIA', 'Tarifa hora guardia ($)'], ['TARIFA_CCTV', 'Tarifa hora CCTV ($)'], ['HORAS_TURNO', 'Horas por turno'],
+  ['PCT_MULTA', 'Multa (0,5 = 50%)'], ['ALERTA_DIAS', 'Alertar en el día consecutivo N°'], ['SIN_CUBRIR_COBRA', 'Puesto sin cubrir cobra turno completo (SI/NO)'],
+  ['IDS_GUARDIA', 'IDs guardia (coma)'], ['IDS_CCTV', 'IDs CCTV (coma)']
+];
+function adm(op, extra = {}) { return api('admin', { data: JSON.stringify(Object.assign({ pin: ADMIN_PIN, op }, extra)) }); }
+$('#a-entrar').onclick = async () => {
+  ADMIN_PIN = $('#a-pin').value.trim();
+  try { const r = await adm('login'); $('#a-login').classList.add('hide'); $('#a-panel').classList.remove('hide'); renderAdmin(r.config); }
+  catch (e) { ADMIN_PIN = null; toast(e.message, true); }
+};
+function renderAdmin(cfg) {
+  $('#a-cerrados').textContent = 'Meses cerrados: ' + (String(cfg.MESES_CERRADOS || '').trim() || 'ninguno');
+  $('#a-cfg').innerHTML = CFG_EDIT.map(([k, t]) => `<div class="row"><label>${t}<input data-k="${k}" value="${esc(cfg[k])}"></label><button class="btn sec" data-save="${k}">Guardar</button></div>`).join('');
+  document.querySelectorAll('[data-save]').forEach(b => b.onclick = async () => {
+    const k = b.dataset.save, v = document.querySelector(`#a-cfg input[data-k="${k}"]`).value;
+    try { await adm('setConfig', { clave: k, valor: v }); toast('Parámetro guardado'); refrescarInit(); } catch (e) { toast(e.message, true); }
+  });
+}
+async function refrescarInit() { try { DATA = await api('init'); lsSet(LS.init, DATA); aplicarInit(); } catch (e) { } }
+async function mesOp(op) {
+  try { const r = await adm(op, { mes: $('#a-mes').value }); $('#a-cerrados').textContent = 'Meses cerrados: ' + (r.mesesCerrados.join(', ') || 'ninguno'); toast(op === 'cerrarMes' ? 'Mes cerrado' : 'Mes abierto'); refrescarInit(); }
+  catch (e) { toast(e.message, true); }
+}
+$('#a-cerrar').onclick = () => { if (confirm('¿Cerrar ' + $('#a-mes').value + '? Nadie podrá editarlo.')) mesOp('cerrarMes'); };
+$('#a-abrir').onclick = () => mesOp('abrirMes');
+$('#a-padd').onclick = async () => {
+  const nombre = $('#a-pnom').value.trim(); if (!nombre) return toast('Escribe el nombre', true);
+  try { await adm('addPersonal', { nombre, cargo: $('#a-pcar').value }); $('#a-pnom').value = ''; toast('Persona agregada'); refrescarInit(); }
+  catch (e) { toast(e.message, true); }
+};
+
+init();
+</script>
+</body>
+</html>
